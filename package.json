@@ -1,22 +1,38 @@
 {
   "name": "@organization/image-cropper",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Accessible Arc UI image cropper dialog for React and Next.js",
   "type": "module",
   "private": true,
   "license": "UNLICENSED",
-  "repository": { "type": "git", "url": "git+https://github.com/salman-patel-eazr/image-cropper.git" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/salman-patel-eazr/image-cropper.git"
+  },
   "homepage": "https://github.com/salman-patel-eazr/image-cropper#readme",
-  "bugs": { "url": "https://github.com/salman-patel-eazr/image-cropper/issues" },
-  "engines": { "node": "^20.19.0 || >=22.12.0" },
-  "files": ["dist", "README.md", "THIRD_PARTY_NOTICES.md"],
+  "bugs": {
+    "url": "https://github.com/salman-patel-eazr/image-cropper/issues"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "THIRD_PARTY_NOTICES.md"
+  ],
   "main": "./dist/image-cropper.js",
   "types": "./dist/index.d.ts",
   "exports": {
-    ".": { "types": "./dist/index.d.ts", "import": "./dist/image-cropper.js" },
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/image-cropper.js"
+    },
     "./styles.css": "./dist/image-cropper.css"
   },
-  "sideEffects": ["**/*.css"],
+  "sideEffects": [
+    "**/*.css"
+  ],
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "tsc --noEmit && vite build && tsc -p tsconfig.build.json",
@@ -25,7 +41,10 @@
     "test:e2e": "playwright test",
     "prepare": "npm run build"
   },
-  "peerDependencies": { "react": "^18.2.0 || ^19.0.0", "react-dom": "^18.2.0 || ^19.0.0" },
+  "peerDependencies": {
+    "react": "^18.2.0 || ^19.0.0",
+    "react-dom": "^18.2.0 || ^19.0.0"
+  },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",
     "lucide-react": "^0.468.0",

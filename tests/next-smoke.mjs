@@ -12,7 +12,7 @@ try {
   await page.locator('input[type=file]').setInputFiles('public/sample.jpg');
   console.log('Source selected.');
   await page.getByRole('button', { name: 'Save image' }).click();
-  await page.getByRole('status').filter({ hasText: 'Exported 512 × 512:' }).waitFor();
+  await page.getByRole('status').filter({ hasText: 'Exported 1300 × 700:' }).waitFor();
   assert.deepEqual(errors, []);
   console.log('Next.js production upload → crop → PNG export passed; no browser errors.');
 } finally { await browser.close(); }

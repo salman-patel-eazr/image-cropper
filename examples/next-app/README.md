@@ -8,6 +8,8 @@ From this folder in PowerShell:
 
 The script installs missing dependencies, builds the local cropper package, and starts the example at http://127.0.0.1:4317. Press Ctrl+C to stop. It also works when invoked from another directory.
 
+This example uses a custom 13:7 ratio with a logical size of 650 × 350 and `pixelRatio: 2`, exporting a 1300 × 700 PNG. Change the `output`, `aspectRatio`, and `viewport` props in `app/page.tsx` to fit your application's requirements. The main Vite playground also has editable width, height, resolution scale, file size, and dialog dimensions.
+
 To choose another port:
 
 ```powershell

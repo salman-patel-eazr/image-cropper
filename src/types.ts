@@ -1,6 +1,8 @@
 export interface Dimensions { width: number; height: number }
 export interface CropArea extends Dimensions { x: number; y: number }
 export interface OutputOptions extends Dimensions {
+  /** Export scale, independent of screen density. Default 1. Final pixels = round(dimension * pixelRatio). */
+  pixelRatio?: number;
   type?: 'image/jpeg' | 'image/png' | 'image/webp';
   /** JPEG/WebP quality, from 0 to 1. Default 0.92. */
   quality?: number;

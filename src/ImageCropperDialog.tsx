@@ -5,7 +5,7 @@ import type { CSSProperties } from 'react';
 import Cropper from 'react-easy-crop';
 import { Crop, Minus, Plus, RotateCcw, RotateCw, Check, LoaderCircle } from 'lucide-react';
 import { Dialog, DialogContent } from './arc/dialog/dialog';
-import { exportCrop, loadImage, validateOptions } from './crop';
+import { exportCrop, getOutputDimensions, loadImage, validateOptions } from './crop';
 import type { CropArea, ImageCropperDialogProps } from './types';
 import 'react-easy-crop/react-easy-crop.css';
 import './styles.css';
@@ -90,6 +90,7 @@ function Editor(props: ImageCropperDialogProps & { source: string; aspect: numbe
   useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
   const completed = useCallback((_: CropArea, pixels: CropArea) => setArea(pixels), []);
   const maxZoom = props.maxZoom ?? 3;
+  const outputPixels = getOutputDimensions(props.output);
   const reset = () => { setCrop({ x: 0, y: 0 }); setZoom(1); setRotation(0); setError(''); };
   const save = async () => {
     if (!area || saving.current) return;
@@ -114,7 +115,7 @@ function Editor(props: ImageCropperDialogProps & { source: string; aspect: numbe
         cropperProps={{ 'aria-label': 'Position image: use arrow keys to move; use the zoom slider to resize', tabIndex: busy ? -1 : 0 }}
         style={{ containerStyle: busy ? { pointerEvents: 'none' } : undefined }}
       />
-      <span className="ic-frame-label" aria-hidden="true">{props.output.width} × {props.output.height}</span>
+      <span className="ic-frame-label" aria-hidden="true">{outputPixels.width} × {outputPixels.height}</span>
     </div>
     <p id={`${id}-instructions`} className="ic-instructions">Drag to reposition · Pinch to zoom · Arrow keys for precision</p>
     <fieldset className="ic-controls" disabled={busy}>
@@ -127,8 +128,8 @@ function Editor(props: ImageCropperDialogProps & { source: string; aspect: numbe
         <button className="ic-icon" aria-label="Reset crop" title="Reset crop" onClick={reset}><RotateCcw size={18} /></button>
       </div>
     </fieldset>
-    <div className="ic-export"><div className="ic-export-icon"><Crop size={19} aria-hidden="true" /></div><div><strong>Made to measure</strong><span>{props.output.width} × {props.output.height} px · {(props.output.type ?? 'image/jpeg').split('/')[1].toUpperCase()}{props.output.maxBytes ? ` · Up to ${Math.round(props.output.maxBytes / 1024)} KB` : ''}</span></div><span className="ic-ratio">{Number(props.aspect.toFixed(2))}:1</span></div>
-    {area && (area.width < props.output.width || area.height < props.output.height) ? <p className="ic-warning">This crop is smaller than the output. Enlarging it may reduce sharpness.</p> : null}
+    <div className="ic-export"><div className="ic-export-icon"><Crop size={19} aria-hidden="true" /></div><div><strong>Made to measure</strong><span>{outputPixels.width} × {outputPixels.height} px · {(props.output.type ?? 'image/jpeg').split('/')[1].toUpperCase()}{props.output.maxBytes ? ` · Up to ${Math.round(props.output.maxBytes / 1024)} KB` : ''}</span></div><span className="ic-ratio">{Number(props.aspect.toFixed(2))}:1</span></div>
+    {area && (area.width < outputPixels.width || area.height < outputPixels.height) ? <p className="ic-warning">This crop is smaller than the output. Enlarging it may reduce sharpness.</p> : null}
     {error ? <p className="ic-error" role="alert">{error}</p> : null}
     <div className="ic-footer"><span>Processed on your device</span><div><button className="ic-button" onClick={() => props.onOpenChange(false)}>Cancel</button><button className="ic-button ic-primary" disabled={!area || busy} onClick={() => void save()}>{busy ? <LoaderCircle size={16} className="ic-spinner" /> : <Check size={16} />}{busy ? 'Saving…' : 'Save image'}</button></div></div>
   </div>;

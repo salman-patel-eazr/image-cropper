@@ -1,10 +1,21 @@
-import type { CropArea, CropResult, OutputOptions } from './types';
+import type { CropArea, CropResult, Dimensions, OutputOptions } from './types';
+
+/** Resolve physical export pixels without accessing the DOM or screen density. */
+export function getOutputDimensions(output: OutputOptions): Dimensions {
+  for (const n of [output.width, output.height]) {
+    if (!Number.isSafeInteger(n) || n < 1) throw new Error('Output dimensions must be positive safe integers.');
+  }
+  const scale = output.pixelRatio ?? 1;
+  if (!Number.isFinite(scale) || scale <= 0) throw new Error('pixelRatio must be a positive finite number.');
+  const width = Math.round(output.width * scale);
+  const height = Math.round(output.height * scale);
+  if (width < 1 || height < 1 || width > 8192 || height > 8192) throw new Error('Output dimensions after scaling must be between 1 and 8192 pixels.');
+  if (width * height > 32_000_000) throw new Error('Output must be no larger than 32 megapixels after scaling.');
+  return { width, height };
+}
 
 export function validateOptions(output: OutputOptions, aspectRatio?: number): number {
-  for (const n of [output.width, output.height]) {
-    if (!Number.isInteger(n) || n < 1 || n > 8192) throw new Error('Output dimensions must be integers between 1 and 8192 pixels.');
-  }
-  if (output.width * output.height > 32_000_000) throw new Error('Output must be no larger than 32 megapixels.');
+  getOutputDimensions(output);
   const ratio = output.width / output.height;
   if (aspectRatio !== undefined && (!Number.isFinite(aspectRatio) || aspectRatio <= 0 || Math.abs(aspectRatio - ratio) / ratio > 0.001)) {
     throw new Error('Aspect ratio must match the output width and height.');
@@ -37,15 +48,16 @@ export async function exportCrop(src: string, crop: CropArea, rotation: number, 
   if (crop.x + crop.width > bounds.width + 2 || crop.y + crop.height > bounds.height + 2) throw new Error('Crop region is outside the image.');
   // Transform directly into the output canvas: no full-resolution intermediate allocation.
   const canvas = document.createElement('canvas');
-  canvas.width = output.width;
-  canvas.height = output.height;
+  const dimensions = getOutputDimensions(output);
+  canvas.width = dimensions.width;
+  canvas.height = dimensions.height;
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('Canvas is unavailable in this browser.');
   const type = output.type ?? 'image/jpeg';
   if (type === 'image/jpeg') { ctx.fillStyle = output.background ?? '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height); }
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
-  ctx.scale(output.width / crop.width, output.height / crop.height);
+  ctx.scale(canvas.width / crop.width, canvas.height / crop.height);
   ctx.translate(bounds.width / 2 - crop.x, bounds.height / 2 - crop.y);
   ctx.rotate(radians);
   ctx.drawImage(image, -image.naturalWidth / 2, -image.naturalHeight / 2);

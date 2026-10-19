@@ -2,7 +2,7 @@
 
 A reusable, controlled image-cropping dialog for React 18/19 and Next.js. Uses the real [Arc UI dialog](https://uiarc.dev/components/dialog) source with Radix accessibility, Motion transitions, and react-easy-crop positioning. Styling ships as plain CSS; consumers do not need Tailwind, shadcn configuration, or a component registry.
 
-**Repository:** [salman-patel-eazr/image-cropper](https://github.com/salman-patel-eazr/image-cropper) (private). **Package import:** `@organization/image-cropper`. **Current release:** `v0.1.0`.
+**Repository:** [salman-patel-eazr/image-cropper](https://github.com/salman-patel-eazr/image-cropper) (private). **Package import:** `@organization/image-cropper`. **Current release:** `v0.2.0`.
 
 ## Install in your React or Next.js project
 
@@ -14,8 +14,8 @@ Run these commands in your application's directory with [GitHub CLI](https://cli
 
 ```sh
 gh auth login
-gh release download v0.1.0 --repo salman-patel-eazr/image-cropper --pattern "organization-image-cropper-0.1.0.tgz" --dir vendor
-npm install ./vendor/organization-image-cropper-0.1.0.tgz
+gh release download v0.2.0 --repo salman-patel-eazr/image-cropper --pattern "organization-image-cropper-0.2.0.tgz" --dir vendor
+npm install ./vendor/organization-image-cropper-0.2.0.tgz
 ```
 
 The archive already contains JavaScript, CSS, and TypeScript declarations. npm resolves the runtime dependencies. Commit the archive in `vendor/` with your application's package manifest and lockfile so teammates and CI can install the same local dependency. Images remain processed on the device. This distribution uses GitHub Releases; it does not require npm or GitHub Packages registry configuration.
@@ -25,7 +25,7 @@ The archive already contains JavaScript, CSS, and TypeScript declarations. npm r
 ```sh
 gh auth login
 gh auth setup-git
-npm install "git+https://github.com/salman-patel-eazr/image-cropper.git#v0.1.0"
+npm install "git+https://github.com/salman-patel-eazr/image-cropper.git#v0.2.0"
 ```
 
 The `prepare` script builds the package when installing from Git, following [npm's Git dependency lifecycle](https://docs.npmjs.com/cli/v11/commands/npm-install/). This needs development build dependencies, working Git credentials, and permitted install scripts. If your npm policy blocks lifecycle scripts, use the prebuilt release instead. In CI, give the Git client read access to this private repository using your existing GitHub App or token-based checkout credentials; never embed credentials in dependency URLs or committed files.
@@ -60,7 +60,7 @@ The launcher installs missing dependencies, builds the cropper package, and serv
 # From the repository root; npm pack runs the prepare build automatically.
 npm pack
 # Run in the consuming application, with the actual archive path:
-npm install /path/to/organization-image-cropper-0.1.0.tgz
+npm install /path/to/organization-image-cropper-0.2.0.tgz
 ```
 
 Keep using `@organization/image-cropper` in imports, regardless of whether you install the Git URL or the release archive. The `private: true` flag prevents accidental registry publication; it does not prevent Git/archive installation. Project code is for internal use (`UNLICENSED`); third-party components retain their own licenses. No registry credentials are stored in this repository.
@@ -77,12 +77,48 @@ Any positive ratio is supported when it matches the requested output dimensions 
 | 9:16 | 1080 × 1920 | Story |
 | Custom, e.g. 3:2 | 1200 × 800 | Enter custom width and height |
 
-- **Pixel dimensions:** integers from 1 to 8192 per dimension, at most 32 million output pixels total. These are exact exported pixels, independent of screen size.
+- **Custom dimensions:** `output.width` and `output.height` are positive integer dimensions. With the default `pixelRatio: 1`, these are the exact exported pixels. They are independent of screen size.
+- **Custom resolution:** `output.pixelRatio` is a positive finite export multiplier (default 1). Use 2 or 3 for higher-resolution assets, 0.5 for smaller assets, or another custom value. Final pixel dimensions are `Math.round(width * pixelRatio)` and `Math.round(height * pixelRatio)`. Each final dimension must be 1–8192, with at most 32 million output pixels total. Fractional results round to whole pixels, so odd dimensions can vary slightly from the logical ratio.
 - **Input bytes:** no package-imposed byte ceiling by default. Set `maxInputBytes` for `File`/`Blob` inputs. Available browser memory still limits large source images.
 - **Output bytes:** no ceiling by default. Set `output.maxBytes` for a hard byte limit. JPEG/WebP quality is reduced without changing dimensions. An impossible limit shows an error; oversized PNGs also show an error.
 - **Editor dimensions:** `viewport` caps the dialog in CSS pixels; it also fits the actual screen and scrolls if needed.
 
 For example, `maxInputBytes={10 * 1024 * 1024}` accepts files up to 10 MiB, and `output.maxBytes: 500 * 1024` requests output up to 500 KiB.
+
+### Custom dimensions, resolution and ratio together
+
+```tsx
+<ImageCropperDialog
+  open={open}
+  onOpenChange={setOpen}
+  src={file}
+  aspectRatio={13 / 7}
+  output={{
+    width: 1300,
+    height: 700,
+    pixelRatio: 2,          // Exports 2600 × 1400 actual pixels
+    type: 'image/webp',
+    quality: 0.9,
+    maxBytes: 500 * 1024,   // Optional maximum exported bytes
+  }}
+  viewport={{ width: 900, height: 800 }}
+  maxInputBytes={10 * 1024 * 1024}
+  onCrop={result => upload(result.file)}
+/>
+```
+
+`aspectRatio` accepts any positive numeric ratio, not just the demo presets. It defaults to `width / height`; supplying a conflicting ratio shows an error. `pixelRatio` changes export resolution, while `viewport` changes only the dialog's size. Scaling never automatically follows the device's pixel density. Resolution here means raster pixel dimensions; this API does not write custom print DPI/PPI metadata.
+
+Use the exported helper to inspect the final resolution before opening the editor:
+
+```ts
+import { getOutputDimensions } from '@organization/image-cropper';
+
+getOutputDimensions({ width: 1300, height: 700, pixelRatio: 2 });
+// { width: 2600, height: 1400 }
+```
+
+The helper applies dimension/scale limits and throws for invalid dimensions or scale. `validateOptions(output, aspectRatio?)` additionally checks ratio, format, quality, and byte-limit options.
 
 ## React usage
 
@@ -135,7 +171,7 @@ See [examples/next-app](examples/next-app) for a complete consuming application.
 | --- | --- |
 | `open`, `onOpenChange` | Required controlled dialog state. Cancellation/closing reports `false`. |
 | `src` | Required `File`, `Blob`, or image URL/data URL. Remote URLs must permit CORS. |
-| `output` | Required `{ width, height, type?, quality?, maxBytes?, background? }`. Dimensions are exact exported pixels. |
+| `output` | Required `{ width, height, pixelRatio?, type?, quality?, maxBytes?, background? }`. Exported dimensions are `round(width * pixelRatio)` × `round(height * pixelRatio)`; `pixelRatio` defaults to 1. |
 | `aspectRatio` | Optional positive number such as `16 / 9`. Defaults to the output ratio. Must match output dimensions within 0.1%; mismatches show an error instead of stretching. |
 | `viewport` | Optional `{ width, height }` in CSS pixels. Caps the dialog dimensions, further clamped to the actual browser viewport; content scrolls when needed. Defaults to 920 × 780. |
 | `onCrop` | Required `(result: CropResult) => void \| Promise<void>`. |
@@ -148,9 +184,9 @@ See [examples/next-app](examples/next-app) for a complete consuming application.
 | `theme` | `light` (default) or `dark`. |
 | `className` | Additional class on the portaled dialog for organization styling. |
 
-Output defaults: JPEG, quality `0.92`, white transparency background. PNG preserves alpha. JPEG/WebP quality is `0..1`. If `maxBytes` is set, quality is reduced while dimensions remain fixed. If even minimum quality exceeds the limit, export fails with an actionable message. PNG cannot be reduced through quality and fails if over the limit. Unsupported browser encoders fail rather than silently changing the requested format. Output dimensions must be integers in `1..8192` and total at most 32 megapixels. Upscaling is permitted with a visible sharpness warning.
+Output defaults: JPEG, quality `0.92`, `pixelRatio: 1`, white transparency background. PNG preserves alpha. JPEG/WebP quality is `0..1`. If `maxBytes` is set, quality is reduced while final pixel dimensions remain fixed. If even minimum quality exceeds the limit, export fails with an actionable message. PNG cannot be reduced through quality and fails if over the limit. Unsupported browser encoders fail rather than silently changing the requested format. Final dimensions after scaling must be in `1..8192` and total at most 32 megapixels. Upscaling is permitted with a visible sharpness warning; it cannot restore detail absent from the source.
 
-`CropResult` contains `blob`, `file`, `width`, `height`, `type`, `size` in bytes, `rotation` in degrees, and the pixel `crop` region in the rotated image bounds. No object URL is allocated for the result; create and revoke your own for previews:
+`CropResult` contains `blob`, `file`, `width`, `height`, `type`, `size` in bytes, `rotation` in degrees, and the pixel `crop` region in the rotated image bounds. Result `width` and `height` are the actual final pixels after `pixelRatio` scaling, matching the encoded image. No object URL is allocated for the result; create and revoke your own for previews:
 
 ```tsx
 useEffect(() => {
@@ -191,7 +227,7 @@ The CI workflow runs the library build, unit tests, browser tests, demo build, a
 
 1. Update `version` and lockfiles, update the README release tag and archive name, and commit the changes.
 2. Run `npm pack`, which builds the distribution.
-3. Create and push the matching version tag (for example `v0.1.1`).
+3. Create and push the matching version tag (for example `v0.2.1`).
 4. Create a GitHub Release for that tag and attach the generated `.tgz` archive. Team members can then install that release with the commands above.
 
 Keep release tags immutable; publish a new version for changes to an existing release.

@@ -71,15 +71,56 @@ test('canvas pixels match rotated crop geometry, preserves PNG alpha and enforce
     const source = canvas.toDataURL();
     const pixel = async (blob: Blob, x: number, y: number) => { const image = await createImageBitmap(blob); const c = document.createElement('canvas'); c.width = image.width; c.height = image.height; const context = c.getContext('2d')!; context.drawImage(image, 0, 0); image.close(); return Array.from(context.getImageData(x, y, 1, 1).data); };
     const crop = await exportCrop(source, { x: 100, y: 0, width: 200, height: 200 }, 0, { width: 100, height: 100, type: 'image/png' });
+    const scaled = await exportCrop(source, { x: 100, y: 0, width: 200, height: 200 }, 0, { width: 100, height: 100, pixelRatio: 2, type: 'image/png' });
     const rotated = await exportCrop(source, { x: 0, y: 0, width: 200, height: 400 }, 90, { width: 100, height: 200, type: 'image/png' });
     ctx.clearRect(0, 0, 400, 200);
     const alpha = await exportCrop(canvas.toDataURL(), { x: 0, y: 0, width: 400, height: 200 }, 0, { width: 100, height: 50, type: 'image/png' });
     const jpeg = await exportCrop(source, { x: 0, y: 0, width: 400, height: 200 }, 0, { width: 400, height: 200, type: 'image/jpeg', maxBytes: 2000 });
-    return { left: await pixel(crop.blob, 5, 50), right: await pixel(crop.blob, 95, 50), top: await pixel(rotated.blob, 50, 5), bottom: await pixel(rotated.blob, 50, 195), alpha: await pixel(alpha.blob, 1, 1), bytes: jpeg.size };
+    return { left: await pixel(crop.blob, 5, 50), right: await pixel(crop.blob, 95, 50), top: await pixel(rotated.blob, 50, 5), bottom: await pixel(rotated.blob, 50, 195), alpha: await pixel(alpha.blob, 1, 1), bytes: jpeg.size, scaled: [scaled.width, scaled.height], scaledLeft: await pixel(scaled.blob, 10, 100), scaledRight: await pixel(scaled.blob, 190, 100) };
   });
   expect(result.left).toEqual([255, 0, 0, 255]); expect(result.right).toEqual([0, 0, 255, 255]);
   expect(result.top).toEqual([255, 0, 0, 255]); expect(result.bottom).toEqual([0, 0, 255, 255]);
   expect(result.alpha).toEqual([0, 0, 0, 0]); expect(result.bytes).toBeLessThanOrEqual(2000);
+  expect(result.scaled).toEqual([200, 200]);
+  expect(result.scaledLeft).toEqual([255, 0, 0, 255]); expect(result.scaledRight).toEqual([0, 0, 255, 255]);
+});
+
+for (const config of [
+  { width: 700, height: 300, scale: 2, format: 'image/png', expected: [1400, 600] },
+  { width: 600, height: 1400, scale: 0.5, format: 'image/jpeg', expected: [300, 700] },
+  { width: 3840, height: 2160, scale: 1, format: 'image/webp', expected: [3840, 2160] }
+]) {
+  test(`custom ${config.width}x${config.height} at ${config.scale}x exports exact ${config.format} pixels`, async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('spinbutton', { name: 'Output width', exact: true }).fill(String(config.width));
+    await page.getByRole('spinbutton', { name: 'Output height', exact: true }).fill(String(config.height));
+    await page.getByRole('spinbutton', { name: 'Resolution scale', exact: true }).fill(String(config.scale));
+    await page.getByRole('combobox', { name: 'Export format' }).selectOption(config.format);
+    await page.getByRole('button', { name: 'Open cropper', exact: true }).click();
+    await expect(page.getByRole('dialog').locator('.ic-frame-label')).toHaveText(`${config.expected[0]} × ${config.expected[1]}`);
+    await page.getByRole('button', { name: 'Save image' }).click();
+    // High-resolution WebP encoding can exceed the default five-second assertion window.
+    await expect(page.getByText('Your image is ready')).toBeVisible({ timeout: 20000 });
+    const size = await page.getByAltText('Your exported crop').evaluate(async (img: HTMLImageElement) => { await img.decode(); return [img.naturalWidth, img.naturalHeight]; });
+    expect(size).toEqual(config.expected);
+  });
+}
+
+test('scaled exports still obey the configured output byte limit', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('spinbutton', { name: 'Output width', exact: true }).fill('600');
+  await page.getByRole('spinbutton', { name: 'Output height', exact: true }).fill('400');
+  await page.getByRole('spinbutton', { name: 'Resolution scale', exact: true }).fill('2');
+  await page.getByRole('spinbutton', { name: 'Maximum file size in KB' }).fill('100');
+  await page.getByRole('button', { name: 'Open cropper', exact: true }).click();
+  await page.getByRole('button', { name: 'Save image' }).click();
+  await expect(page.getByText('Your image is ready')).toBeVisible();
+  const result = await page.getByAltText('Your exported crop').evaluate(async (img: HTMLImageElement) => {
+    await img.decode(); const blob = await fetch(img.src).then(r => r.blob());
+    return { dimensions: [img.naturalWidth, img.naturalHeight], bytes: blob.size };
+  });
+  expect(result.dimensions).toEqual([1200, 800]);
+  expect(result.bytes).toBeLessThanOrEqual(100 * 1024);
 });
 
 test('desktop visual review', async ({ page }) => {
