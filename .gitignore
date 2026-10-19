@@ -1,0 +1,14 @@
+node_modules/
+dist/
+demo-dist/
+test-results/
+playwright-report/
+*.tgz
+.verification/
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+Thumbs.db
+coverage/
