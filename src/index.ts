@@ -1,4 +1,4 @@
 "use client";
 export { ImageCropperDialog } from './ImageCropperDialog';
 export { exportCrop, getOutputDimensions, validateOptions } from './crop';
-export type { ImageCropperDialogProps, CropResult, CropArea, Dimensions, OutputOptions } from './types';
+export type { ImageCropperDialogProps, CropResult, CropArea, CropperStyle, Dimensions, OutputOptions } from './types';

@@ -1,3 +1,7 @@
+import type { CSSProperties } from 'react';
+
+export type CropperStyle = CSSProperties & { [key: `--${string}`]: string | number | undefined };
+
 export interface Dimensions { width: number; height: number }
 export interface CropArea extends Dimensions { x: number; y: number }
 export interface OutputOptions extends Dimensions {
@@ -37,6 +41,11 @@ export interface ImageCropperDialogProps {
   maxInputBytes?: number;
   maxZoom?: number;
   allowRotation?: boolean;
-  theme?: 'light' | 'dark';
+  /** Inherit the surrounding app theme by default; explicit modes select fallback palettes. */
+  theme?: 'inherit' | 'light' | 'dark';
+  /** Optional source element for theme tokens and typography. Defaults to the component's DOM parent. */
+  themeRoot?: HTMLElement | null;
+  /** Overrides for dialog styles and --ic-* theme tokens. */
+  style?: CropperStyle;
   className?: string;
 }

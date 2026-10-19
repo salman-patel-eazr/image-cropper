@@ -8,7 +8,7 @@ Dialog source, dialog CSS, motion tokens, and foundation tokens were retrieved f
 - https://uiarc.dev/r/arc-motion-tokens.json
 - https://uiarc.dev/r/arc-foundation.json
 
-Arc UI declares its free components open source under MIT: https://uiarc.dev/docs/introduction. Original source paths were `registry/components/dialog/*`, `registry/motion-tokens.ts`, and `registry/foundation.css`. Local adaptations scope foundation tokens to the cropper, provide cropper sizing, use an SSR-safe layout effect, and remove panel scale animation to keep cropper measurements accurate during entrance. No Pro components were used.
+Arc UI declares its free components open source under MIT: https://uiarc.dev/docs/introduction. Original source paths were `registry/components/dialog/*`, `registry/motion-tokens.ts`, and `registry/foundation.css`. Local adaptations provide cropper sizing, use an SSR-safe layout effect, and remove panel scale animation to keep cropper measurements accurate during entrance. In v0.3.0 the fixed foundation palette was removed from the runtime and replaced with namespaced parent-theme fallbacks; dialog styling and overlay styling were adapted to inherit the host design system. No Pro components were used.
 
 MIT License
 

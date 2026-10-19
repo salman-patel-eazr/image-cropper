@@ -5,7 +5,8 @@ export default function Page() {
   const [file, setFile] = useState<File | null>(null);
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState('');
-  return <main><h1>Next.js image cropper</h1><p>Custom 13:7 crop: 650 × 350 at 2× exports 1300 × 700 pixels.</p><label>Choose image<input type="file" accept="image/*" onChange={event => {
+  const [dark, setDark] = useState(false);
+  return <main className={`host-example ${dark ? 'dark' : ''}`}><h1>Next.js image cropper</h1><p>Custom 13:7 crop: 650 × 350 at 2× exports 1300 × 700 pixels.</p><p>The cropper inherits this page's fonts, colors, and scoped light/dark theme automatically.</p><button onClick={() => setDark(value => !value)}>Toggle host theme</button><br/><br/><label>Choose image<input type="file" accept="image/*" onChange={event => {
     const selected = event.target.files?.[0]; if (selected) { setFile(selected); setOpen(true); }
     event.target.value = '';
   }}/></label><p role="status">{message}</p>{file ? <ImageCropperDialog src={file} open={open} onOpenChange={setOpen}

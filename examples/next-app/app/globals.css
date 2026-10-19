@@ -1,0 +1,30 @@
+body { margin: 0; }
+.host-example {
+  --background: #f7f8fc;
+  --foreground: #172033;
+  --primary: #4f46e5;
+  --primary-foreground: #fff;
+  --muted: #edf0f7;
+  --muted-foreground: #596275;
+  --border: #ccd2e0;
+  --radius: .75rem;
+  font-family: system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--foreground);
+  background: var(--background);
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 32px;
+}
+.host-example.dark {
+  --background: #172033;
+  --foreground: #eef2ff;
+  --primary: #a5b4fc;
+  --primary-foreground: #172033;
+  --muted: #28344b;
+  --muted-foreground: #c1c8da;
+  --border: #46536b;
+  color-scheme: dark;
+}
+.host-example button, .host-example input { font: inherit; }

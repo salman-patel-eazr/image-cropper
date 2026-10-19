@@ -2,7 +2,7 @@
 
 A reusable, controlled image-cropping dialog for React 18/19 and Next.js. Uses the real [Arc UI dialog](https://uiarc.dev/components/dialog) source with Radix accessibility, Motion transitions, and react-easy-crop positioning. Styling ships as plain CSS; consumers do not need Tailwind, shadcn configuration, or a component registry.
 
-**Repository:** [salman-patel-eazr/image-cropper](https://github.com/salman-patel-eazr/image-cropper) (private). **Package import:** `@organization/image-cropper`. **Current release:** `v0.2.0`.
+**Repository:** [salman-patel-eazr/image-cropper](https://github.com/salman-patel-eazr/image-cropper) (private). **Package import:** `@organization/image-cropper`. **Current release:** `v0.3.0`.
 
 ## Install in your React or Next.js project
 
@@ -14,8 +14,8 @@ Run these commands in your application's directory with [GitHub CLI](https://cli
 
 ```sh
 gh auth login
-gh release download v0.2.0 --repo salman-patel-eazr/image-cropper --pattern "organization-image-cropper-0.2.0.tgz" --dir vendor
-npm install ./vendor/organization-image-cropper-0.2.0.tgz
+gh release download v0.3.0 --repo salman-patel-eazr/image-cropper --pattern "organization-image-cropper-0.3.0.tgz" --dir vendor
+npm install ./vendor/organization-image-cropper-0.3.0.tgz
 ```
 
 The archive already contains JavaScript, CSS, and TypeScript declarations. npm resolves the runtime dependencies. Commit the archive in `vendor/` with your application's package manifest and lockfile so teammates and CI can install the same local dependency. Images remain processed on the device. This distribution uses GitHub Releases; it does not require npm or GitHub Packages registry configuration.
@@ -25,7 +25,7 @@ The archive already contains JavaScript, CSS, and TypeScript declarations. npm r
 ```sh
 gh auth login
 gh auth setup-git
-npm install "git+https://github.com/salman-patel-eazr/image-cropper.git#v0.2.0"
+npm install "git+https://github.com/salman-patel-eazr/image-cropper.git#v0.3.0"
 ```
 
 The `prepare` script builds the package when installing from Git, following [npm's Git dependency lifecycle](https://docs.npmjs.com/cli/v11/commands/npm-install/). This needs development build dependencies, working Git credentials, and permitted install scripts. If your npm policy blocks lifecycle scripts, use the prebuilt release instead. In CI, give the Git client read access to this private repository using your existing GitHub App or token-based checkout credentials; never embed credentials in dependency URLs or committed files.
@@ -60,7 +60,7 @@ The launcher installs missing dependencies, builds the cropper package, and serv
 # From the repository root; npm pack runs the prepare build automatically.
 npm pack
 # Run in the consuming application, with the actual archive path:
-npm install /path/to/organization-image-cropper-0.2.0.tgz
+npm install /path/to/organization-image-cropper-0.3.0.tgz
 ```
 
 Keep using `@organization/image-cropper` in imports, regardless of whether you install the Git URL or the release archive. The `private: true` flag prevents accidental registry publication; it does not prevent Git/archive installation. Project code is for internal use (`UNLICENSED`); third-party components retain their own licenses. No registry credentials are stored in this repository.
@@ -181,7 +181,9 @@ See [examples/next-app](examples/next-app) for a complete consuming application.
 | `allowRotation` | Show 90-degree rotation; default true. |
 | `fileName` | Export basename; default `cropped-image`. Extension follows output format. |
 | `title`, `description` | Customize dialog copy. |
-| `theme` | `light` (default) or `dark`. |
+| `theme` | `inherit` (default), `light`, or `dark`. Inherited mode follows host theme markers and color scheme. Explicit modes choose a fallback palette; host color tokens remain authoritative. |
+| `themeRoot` | Optional `HTMLElement` supplying the theme when the desired theme provider is outside the component's DOM ancestors. Defaults to the component's parent element. Set this from a client-side ref/state. |
+| `style` | Optional CSS properties and typed `--ic-*` overrides on the dialog. Custom variables referenced by overrides are preserved across the portal. |
 | `className` | Additional class on the portaled dialog for organization styling. |
 
 Output defaults: JPEG, quality `0.92`, `pixelRatio: 1`, white transparency background. PNG preserves alpha. JPEG/WebP quality is `0..1`. If `maxBytes` is set, quality is reduced while final pixel dimensions remain fixed. If even minimum quality exceeds the limit, export fails with an actionable message. PNG cannot be reduced through quality and fails if over the limit. Unsupported browser encoders fail rather than silently changing the requested format. Final dimensions after scaling must be in `1..8192` and total at most 32 megapixels. Upscaling is permitted with a visible sharpness warning; it cannot restore detail absent from the source.
@@ -201,11 +203,58 @@ Animated images export a still frame. HEIC and other formats need browser decode
 
 ## Organization styling
 
-Arc foundation tokens are scoped to `.ic-theme` so importing the library does not reset your app's global theme. Use a custom class to override tokens:
+The cropper **inherits the surrounding application's theme by default**. No cropper-specific theme provider is needed:
+
+- Body font family, base font size, weight, line height, and letter spacing come from the component's DOM parent. Controls inherit that typography, and text sizes scale with the host's base size.
+- The host's semantic colors and radius are mapped automatically. If no semantic colors are defined, the parent text color and nearest nontransparent ancestor background are used, with derived neutral borders and muted surfaces.
+- Scoped themes work even though the dialog is portaled to `document.body`: a small hidden anchor at the component's location captures inherited styles and variables before the dialog opens. The portal stays outside clipping/transform containers.
+- Changes to ancestor `class`, inline `style`, `data-theme`, or `data-color-scheme` are observed while open. `.dark`/`.light` markers, inherited `color-scheme`, system color-scheme changes, and responsive viewport changes are supported. Observers/listeners are removed on close.
+- The stylesheet defines only namespaced cropper tokens; it does not write a global palette, font, or theme onto your application.
+
+### Automatically recognized tokens
+
+| Cropper role | Host tokens, in priority order (after a matching `--ic-*` override) |
+| --- | --- |
+| Panel background | `--popover`, `--surface-raised`, `--surface`, `--background` |
+| Text | `--popover-foreground`, `--foreground`, `--text-primary` |
+| Accent / primary button | `--primary`, `--accent` |
+| Primary button text | `--primary-foreground`, `--accent-foreground` |
+| Muted surface | `--surface-muted`, `--muted` |
+| Secondary text | `--text-secondary`, `--muted-foreground` |
+| Border | `--border`, `--border-color` |
+| Body font | `--font-body`, `--font-sans`, then the parent's computed font |
+| Heading font | `--font-heading`, `--font-display`, then the body font |
+| Radius | `--radius`, `--radius-surface` |
+
+Common MUI CSS palette tokens (`--mui-palette-*`) and Chakra semantic tokens (`--chakra-colors-*`) also have mappings for panel, text, accent, border, and related colors. Modern CSS colors and legacy HSL channel tokens such as `--primary: 270 100% 40%` are supported. Color tokens should contain colors, not full CSS border/background shorthands.
+
+### Map your own design system when needed
+
+Projects with different token names or JavaScript-only theme objects can pass a small adapter using `style` or a custom class. The package cannot infer arbitrary framework theme objects or styles that apply only to another component's selectors.
+
+```tsx
+<ImageCropperDialog
+  {...cropperProps}
+  style={{
+    '--ic-background': 'var(--brand-panel)',
+    '--ic-foreground': 'var(--brand-text)',
+    '--ic-accent': 'var(--brand-primary)',
+    '--ic-accent-foreground': 'var(--brand-on-primary)',
+    '--ic-font-family': 'var(--brand-font)',
+    '--ic-radius': '12px',
+  }}
+/>
+```
+
+Those brand variables can live on the component's surrounding wrapper; they are bridged into the portal. Public override tokens include `--ic-background`, `--ic-foreground`, `--ic-muted`, `--ic-muted-foreground`, `--ic-accent`, `--ic-accent-hover`, `--ic-accent-foreground`, `--ic-border`, `--ic-danger`, `--ic-font-family`, `--ic-font-size`, `--ic-line-height`, `--ic-letter-spacing`, `--ic-heading-font-family`, `--ic-heading-size`, `--ic-heading-weight`, and `--ic-radius`. An explicit `style` value wins over a class override, which wins over captured parent defaults.
+
+Use `className="my-cropper"` for reusable CSS overrides:
 
 ```css
 .my-cropper { --ic-accent: #17634f; --ic-accent-hover: #0d4939; --ic-stage-height: 380px; }
 ```
+
+Ancestor selectors such as `.app-shell .my-cropper` do not cross the body portal; use `.my-cropper` directly or expose the design values as inherited variables. `themeRoot` can select another element as the theme source. `theme="light"` or `theme="dark"` selects the neutral fallback mode, while explicit host color tokens and overrides still take precedence. Without host markers, the inherited `color-scheme` or system preference supplies the fallback mode. Image-canvas masks and crop outlines keep neutral visibility defaults; `--ic-canvas-background`, `--ic-crop-border`, `--ic-crop-mask`, and `--ic-grid-color` can override them through `style`/`className` when needed.
 
 The dialog traps focus, supports Escape and keyboard crop movement, restores focus to the opening element when it is still present, and respects reduced-motion preferences. Arrow keys position the image; Tab reaches the zoom and transform controls. Wheel zoom is disabled to avoid interfering with page scrolling; use the slider or touch pinch.
 
@@ -227,7 +276,7 @@ The CI workflow runs the library build, unit tests, browser tests, demo build, a
 
 1. Update `version` and lockfiles, update the README release tag and archive name, and commit the changes.
 2. Run `npm pack`, which builds the distribution.
-3. Create and push the matching version tag (for example `v0.2.1`).
+3. Create and push the matching version tag (for example `v0.3.1`).
 4. Create a GitHub Release for that tag and attach the generated `.tgz` archive. Team members can then install that release with the commands above.
 
 Keep release tags immutable; publish a new version for changes to an existing release.

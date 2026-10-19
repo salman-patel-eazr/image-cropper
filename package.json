@@ -1,6 +1,6 @@
 {
   "name": "@organization/image-cropper",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Accessible Arc UI image cropper dialog for React and Next.js",
   "type": "module",
   "private": true,

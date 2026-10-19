@@ -37,7 +37,7 @@ function App() {
   return <div className="app">
     <header className="topbar"><a className="brand" href="#"><span className="brand-mark"><Crop size={19} /></span>frame<span className="brand-dot">.</span></a><span className="top-caption">A better fit, every time.</span><a className="doc-link" href="#integration">Integration guide <ArrowUpRight size={14} /></a></header>
     <main>
-      <div className="intro"><div><span className="eyebrow"><span />THE IMAGE CROPPER PACKAGE</span><h1>Good images.<br/><span>Perfect proportions.</span></h1><p>One thoughtful cropper for every corner of your product.<br/>Choose a format, find your frame, and make it fit.</p></div><div className="version"><span>REACT + NEXT.JS</span><strong>Small package.<br/>Bigger picture.</strong><span>v0.2.0 <span className="version-dot">●</span> Ready to integrate</span></div></div>
+      <div className="intro"><div><span className="eyebrow"><span />THE IMAGE CROPPER PACKAGE</span><h1>Good images.<br/><span>Perfect proportions.</span></h1><p>One thoughtful cropper for every corner of your product.<br/>Choose a format, find your frame, and make it fit.</p></div><div className="version"><span>REACT + NEXT.JS</span><strong>Small package.<br/>Bigger picture.</strong><span>v0.3.0 <span className="version-dot">●</span> Ready to integrate</span></div></div>
       <section className="workspace" aria-label="Cropper playground">
         <div className="work-header"><span><span className="small-icon"><Layers size={15}/></span>Playground</span><span className="local-badge"><span />All processing stays on your device</span></div>
         <div className="work-body"><aside className="settings">
@@ -61,7 +61,7 @@ function App() {
       <section id="integration" className="integration"><div><span className="eyebrow">BUILT TO BELONG</span><h2>Fits right into<br/>your next project.</h2><p>A controlled dialog, a few props, and an image<br/>that’s ready for wherever it goes next.</p><div className="framework-tags"><span>React 18 / 19</span><span>Next.js App Router</span><span>TypeScript</span></div></div><div className="code-card"><div><span><Code2 size={14}/>YourComponent.tsx</span><button onClick={() => { void navigator.clipboard.writeText(code).then(() => setMessage('Integration snippet copied.')).catch(() => setMessage('Clipboard unavailable. Select and copy the snippet below.')); }}>Copy snippet</button></div><pre><code>{code}</code></pre></div></section>
       <footer><span className="brand">frame.</span><span>Thoughtfully framed. Effortlessly integrated.</span><span>Built with Arc UI ↗</span></footer>
     </main>
-    <ImageCropperDialog open={open} onOpenChange={setOpen} src={src} output={{ width, height, pixelRatio, type: format, maxBytes: maxKB ? Number(maxKB) * 1024 : undefined }} viewport={{ width: viewportW, height: viewportH }} theme={dark ? 'dark' : 'light'} onCrop={setResult}/>
+    <ImageCropperDialog open={open} onOpenChange={setOpen} src={src} output={{ width, height, pixelRatio, type: format, maxBytes: maxKB ? Number(maxKB) * 1024 : undefined }} viewport={{ width: viewportW, height: viewportH }} theme={dark ? 'dark' : 'inherit'} onCrop={setResult}/>
   </div>;
 }
 createRoot(document.getElementById('root')!).render(<StrictMode><App/></StrictMode>);

@@ -1,36 +1,40 @@
 "use client";
 
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
-import type { CSSProperties } from 'react';
 import Cropper from 'react-easy-crop';
 import { Crop, Minus, Plus, RotateCcw, RotateCw, Check, LoaderCircle } from 'lucide-react';
 import { Dialog, DialogContent } from './arc/dialog/dialog';
 import { exportCrop, getOutputDimensions, loadImage, validateOptions } from './crop';
-import type { CropArea, ImageCropperDialogProps } from './types';
+import type { CropArea, CropperStyle, ImageCropperDialogProps } from './types';
+import { useHostTheme } from './useHostTheme';
 import 'react-easy-crop/react-easy-crop.css';
 import './styles.css';
 
 const asError = (error: unknown) => error instanceof Error ? error : new Error('Something went wrong. Please try again.');
 
 export function ImageCropperDialog(props: ImageCropperDialogProps) {
+  const { anchor, snapshot } = useHostTheme(props.open, props.theme, props.themeRoot);
   const trigger = useRef<HTMLElement | null>(null);
   useEffect(() => { if (props.open) trigger.current = document.activeElement as HTMLElement; }, [props.open]);
   const viewport = props.viewport;
   const style = {
+    ...snapshot?.style,
     '--ic-width': viewport && Number.isFinite(viewport.width) && viewport.width > 0 ? `${viewport.width}px` : '920px',
-    '--ic-height': viewport && Number.isFinite(viewport.height) && viewport.height > 0 ? `${viewport.height}px` : '780px'
-  } as CSSProperties;
-  return <Dialog open={props.open} onOpenChange={props.onOpenChange}>
+    '--ic-height': viewport && Number.isFinite(viewport.height) && viewport.height > 0 ? `${viewport.height}px` : '780px',
+    ...props.style
+  };
+  return <><span hidden aria-hidden="true" data-ic-theme-source="" ref={anchor} /><Dialog open={props.open && snapshot !== null} onOpenChange={props.onOpenChange}>
     <DialogContent
       title={props.title ?? 'Make it picture perfect'}
       description={props.description ?? 'Find your frame. We’ll take care of the dimensions.'}
       className={`ic-theme ic-dialog ${props.className ?? ''}`}
-      data-ic-theme={props.theme ?? 'light'} style={style}
+      data-ic-theme={snapshot?.mode} style={style}
+      overlayStyle={{ '--ic-overlay': props.style?.['--ic-overlay'] ?? snapshot?.style['--ic-host-overlay'] } as CropperStyle}
       onCloseAutoFocus={event => { event.preventDefault(); trigger.current?.focus(); }}
     >
       {props.open ? <SourceEditor {...props} /> : null}
     </DialogContent>
-  </Dialog>;
+  </Dialog></>;
 }
 
 function SourceEditor(props: ImageCropperDialogProps) {

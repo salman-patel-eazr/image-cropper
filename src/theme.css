@@ -1,0 +1,29 @@
+/* All defaults are namespaced fallbacks; parent design tokens are never overwritten. */
+.ic-theme {
+  --ic-fallback-background: #fff;
+  --ic-fallback-foreground: #171717;
+  --ic-bg: var(--ic-background, var(--ic-host-background, var(--ic-fallback-background)));
+  --ic-fg: var(--ic-foreground, var(--ic-host-foreground, var(--ic-fallback-foreground)));
+  --ic-color-muted: var(--ic-muted, var(--ic-host-muted, color-mix(in srgb, var(--ic-bg) 94%, var(--ic-fg))));
+  --ic-secondary: var(--ic-muted-foreground, var(--ic-host-secondary, color-mix(in srgb, var(--ic-fg) 70%, var(--ic-bg))));
+  --ic-color-border: var(--ic-border, var(--ic-host-border, color-mix(in srgb, var(--ic-fg) 18%, var(--ic-bg))));
+  --ic-color-accent: var(--ic-accent, var(--ic-host-accent, var(--ic-fg)));
+  --ic-color-accent-foreground: var(--ic-accent-foreground, var(--ic-host-accent-foreground, var(--ic-bg)));
+  --ic-color-accent-hover: var(--ic-accent-hover, var(--ic-host-accent-hover, color-mix(in srgb, var(--ic-color-accent) 88%, var(--ic-bg))));
+  --ic-color-danger: var(--ic-danger, var(--ic-host-danger, #c73535));
+  --ic-dialog-radius: var(--ic-radius, var(--ic-host-radius, 1em));
+  --ic-control-radius: var(--ic-radius, var(--ic-host-radius, .45em));
+  color: var(--ic-fg);
+  background: var(--ic-bg);
+  font-family: var(--ic-font-family, var(--ic-host-font-family, inherit));
+  font-size: var(--ic-font-size, var(--ic-host-font-size, 1rem));
+  font-weight: var(--ic-host-font-weight, 400);
+  line-height: var(--ic-line-height, var(--ic-host-line-height, 1.5));
+  letter-spacing: var(--ic-letter-spacing, var(--ic-host-letter-spacing, normal));
+}
+.ic-theme[data-ic-theme="light"] { color-scheme: light; }
+.ic-theme[data-ic-theme="dark"] {
+  color-scheme: dark;
+  --ic-fallback-background: #202020;
+  --ic-fallback-foreground: #f5f5f5;
+}
